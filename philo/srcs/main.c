@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: leo <leo@student.42.fr>                    +#+  +:+       +#+        */
+/*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/03 20:22:12 by leo               #+#    #+#             */
-/*   Updated: 2023/12/10 21:09:43 by leo              ###   ########.fr       */
+/*   Updated: 2023/12/12 09:42:33 by legrandc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,44 +28,36 @@ size_t	get_ms(void)
 
 void	*funct(void *ptr)
 {
-	size_t			num;
-	pthread_mutex_t	lock;
-	size_t			count;
-	t_vars			*vars;
-	size_t			last_meal;
+	size_t	num;
+	size_t	count;
+	t_vars	*vars;
+	size_t	last_meal;
 
 	vars = ptr;
 	last_meal = vars->start_time;
-	pthread_mutex_init(&lock, NULL);
 	num = vars->index++;
 	count = 0;
 	while (!vars->max_meals_bool || count < vars->max_meals)
 	{
+		pthread_mutex_lock(&vars->forks[num]);
+		pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
 		if (get_ms() - last_meal >= vars->death_time)
 		{
-			printf("%ld rip\n", num);
+			printf("%ld %ld %ld rip\n", last_meal + vars->death_time
+				- vars->start_time, num, get_ms() - last_meal);
 			exit(1);
 		}
-		if (!vars->forks[num] && !vars->forks[(num + 1) % vars->philo_nb])
-		{
-			pthread_mutex_lock(&lock);
-			vars->forks[num] = 1;
-			vars->forks[(num + 1) % vars->philo_nb] = 1;
-			pthread_mutex_unlock(&lock);
-			printf("%ld fork\n", num);
-			printf("%ld fork\n", num);
-			last_meal = get_ms();
-			printf("%ld eat\n", num);
-			usleep(vars->eating_time * 1000);
-			printf("%ld sleep\n", num);
-			pthread_mutex_lock(&lock);
-			vars->forks[num] = 0;
-			vars->forks[(num + 1) % vars->philo_nb] = 0;
-			pthread_mutex_unlock(&lock);
-			usleep(vars->sleeping_time * 1000);
-			printf("%ld thinking\n", num);
-			count++;
-		}
+		printf("%ld %ld fork\n", get_ms() - vars->start_time, num);
+		printf("%ld %ld fork\n", get_ms() - vars->start_time, num);
+		last_meal = get_ms();
+		printf("%ld %ld eat\n", get_ms() - vars->start_time, num);
+		usleep(vars->eating_time * 1000);
+		pthread_mutex_unlock(&vars->forks[num]);
+		pthread_mutex_unlock(&vars->forks[(num + 1) % vars->philo_nb]);
+		printf("%ld %ld sleep\n", get_ms() - vars->start_time, num);
+		usleep(vars->sleeping_time * 1000);
+		printf("%ld %ld thinking\n", get_ms() - vars->start_time, num);
+		count++;
 	}
 	return (vars);
 }
@@ -90,13 +82,14 @@ int	main(int ac, char **av)
 	if (av[5])
 		vars.max_meals = ft_atoi(av[5]);
 	vars.threads = malloc(sizeof(pthread_t) * vars.philo_nb);
+	vars.forks = malloc(sizeof(pthread_mutex_t) * vars.philo_nb);
 	if (!vars.threads)
 		exit_error("Not enough memory\n");
-	vars.forks = malloc(sizeof(int) * vars.philo_nb);
 	if (!vars.forks)
 		exit_error("Not enough memory\n");
-	memset(vars.forks, 0, vars.philo_nb * sizeof(int));
 	i = 0;
+	while (i < vars.philo_nb)
+		pthread_mutex_init(&vars.forks[i++], NULL);
 	i = 0;
 	vars.index = 0;
 	while (i < vars.philo_nb)
@@ -108,5 +101,4 @@ int	main(int ac, char **av)
 	{
 		pthread_join(vars.threads[i++], NULL);
 	}
-	// sleep(1);
 }
