@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   philo.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cqin <cqin@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:12:51 by leo               #+#    #+#             */
-/*   Updated: 2023/12/12 01:10:47 by legrandc         ###   ########.fr       */
+/*   Updated: 2024/01/17 14:46:35 by cqin             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,9 @@ typedef struct s_vars
 {
 	size_t			philo_nb;
 	pthread_t		*threads;
+	pthread_mutex_t	incr;
+	pthread_mutex_t	write;
+	pthread_mutex_t	dead_lock;
 	pthread_mutex_t	*forks;
 	size_t			index;
 	size_t			start_time;
@@ -33,6 +36,7 @@ typedef struct s_vars
 	size_t			eating_time;
 	size_t			sleeping_time;
 	size_t			max_meals;
+	int				dead;
 	int				max_meals_bool;
 
 }					t_vars;

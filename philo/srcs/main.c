@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
+/*   By: cqin <cqin@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/03 20:22:12 by leo               #+#    #+#             */
-/*   Updated: 2023/12/12 09:42:33 by legrandc         ###   ########.fr       */
+/*   Updated: 2024/01/17 15:58:04 by cqin             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,16 @@ size_t	get_ms(void)
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
+void	lock_print(t_vars *vars, int time, int index, char *msg)
+{
+	pthread_mutex_lock(&vars->write);
+	if (vars->dead == 0)
+	{
+		printf("%d %d %s\n", time, index + 1, msg);
+	}
+	pthread_mutex_unlock(&vars->write);
+}
+
 void	*funct(void *ptr)
 {
 	size_t	num;
@@ -35,28 +45,54 @@ void	*funct(void *ptr)
 
 	vars = ptr;
 	last_meal = vars->start_time;
+	pthread_mutex_lock(&vars->incr);
 	num = vars->index++;
+	pthread_mutex_unlock(&vars->incr);
 	count = 0;
 	while (!vars->max_meals_bool || count < vars->max_meals)
 	{
-		pthread_mutex_lock(&vars->forks[num]);
-		pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
+		if (num % 2)
+		{
+			pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
+			lock_print(vars, get_ms() - vars->start_time, num, "fork");
+			pthread_mutex_lock(&vars->forks[num]);
+			lock_print(vars, get_ms() - vars->start_time, num, "fork");
+		}
+		else
+		{
+			pthread_mutex_lock(&vars->forks[num]);
+			lock_print(vars, get_ms() - vars->start_time, num, "fork");
+			pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
+			lock_print(vars, get_ms() - vars->start_time, num, "fork");
+		}
 		if (get_ms() - last_meal >= vars->death_time)
 		{
-			printf("%ld %ld %ld rip\n", last_meal + vars->death_time
-				- vars->start_time, num, get_ms() - last_meal);
+			pthread_mutex_lock(&vars->write);
+			if (vars->dead == 0)
+				printf("%ld %ld %s\n %ld\n", last_meal + vars->death_time
+					- vars->start_time, num + 1, "died", get_ms() - last_meal
+					- vars->death_time);
+			vars->dead = 1;
+			pthread_mutex_unlock(&vars->write);
 			exit(1);
+			return (NULL);
 		}
-		printf("%ld %ld fork\n", get_ms() - vars->start_time, num);
-		printf("%ld %ld fork\n", get_ms() - vars->start_time, num);
 		last_meal = get_ms();
-		printf("%ld %ld eat\n", get_ms() - vars->start_time, num);
+		lock_print(vars, get_ms() - vars->start_time, num, "eat");
 		usleep(vars->eating_time * 1000);
-		pthread_mutex_unlock(&vars->forks[num]);
-		pthread_mutex_unlock(&vars->forks[(num + 1) % vars->philo_nb]);
-		printf("%ld %ld sleep\n", get_ms() - vars->start_time, num);
+		if (num % 2)
+		{
+			pthread_mutex_unlock(&vars->forks[(num + 1) % vars->philo_nb]);
+			pthread_mutex_unlock(&vars->forks[num]);
+		}
+		else
+		{
+			pthread_mutex_unlock(&vars->forks[num]);
+			pthread_mutex_unlock(&vars->forks[(num + 1) % vars->philo_nb]);
+		}
+		lock_print(vars, get_ms() - vars->start_time, num, "sleep");
 		usleep(vars->sleeping_time * 1000);
-		printf("%ld %ld thinking\n", get_ms() - vars->start_time, num);
+		lock_print(vars, get_ms() - vars->start_time, num, "is thinking");
 		count++;
 	}
 	return (vars);
@@ -92,6 +128,10 @@ int	main(int ac, char **av)
 		pthread_mutex_init(&vars.forks[i++], NULL);
 	i = 0;
 	vars.index = 0;
+	vars.dead = 0;
+	pthread_mutex_init(&vars.write, NULL);
+	pthread_mutex_init(&vars.dead_lock, NULL);
+	pthread_mutex_init(&vars.incr, NULL);
 	while (i < vars.philo_nb)
 	{
 		pthread_create(&vars.threads[i++], NULL, funct, &vars);
