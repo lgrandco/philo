@@ -6,7 +6,7 @@
 /*   By: cqin <cqin@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/03 20:22:12 by leo               #+#    #+#             */
-/*   Updated: 2024/01/17 15:58:04 by cqin             ###   ########.fr       */
+/*   Updated: 2024/01/17 16:09:14 by cqin             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,19 +51,19 @@ void	*funct(void *ptr)
 	count = 0;
 	while (!vars->max_meals_bool || count < vars->max_meals)
 	{
-		if (num % 2)
+		if ((num + 1) % 2)
 		{
 			pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
-			lock_print(vars, get_ms() - vars->start_time, num, "fork");
+			lock_print(vars, get_ms() - vars->start_time, num, "fork r");
 			pthread_mutex_lock(&vars->forks[num]);
-			lock_print(vars, get_ms() - vars->start_time, num, "fork");
+			lock_print(vars, get_ms() - vars->start_time, num, "fork l");
 		}
 		else
 		{
 			pthread_mutex_lock(&vars->forks[num]);
-			lock_print(vars, get_ms() - vars->start_time, num, "fork");
+			lock_print(vars, get_ms() - vars->start_time, num, "fork l");
 			pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
-			lock_print(vars, get_ms() - vars->start_time, num, "fork");
+			lock_print(vars, get_ms() - vars->start_time, num, "fork r");
 		}
 		if (get_ms() - last_meal >= vars->death_time)
 		{
