@@ -6,7 +6,7 @@
 /*   By: cqin <cqin@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/03 20:22:12 by leo               #+#    #+#             */
-/*   Updated: 2024/01/17 16:09:14 by cqin             ###   ########.fr       */
+/*   Updated: 2024/01/17 19:43:13 by cqin             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,13 @@ size_t	get_ms(void)
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
+size_t	get_current_time(void)
+{
+	struct timeval	time;
+
+	return (time.tv_sec * 1000000 + time.tv_usec);
+}
+
 void	lock_print(t_vars *vars, int time, int index, char *msg)
 {
 	pthread_mutex_lock(&vars->write);
@@ -34,6 +41,15 @@ void	lock_print(t_vars *vars, int time, int index, char *msg)
 		printf("%d %d %s\n", time, index + 1, msg);
 	}
 	pthread_mutex_unlock(&vars->write);
+}
+
+void	ft_usleep(size_t time)
+{
+	size_t	start;
+
+	start = get_current_time();
+	while (get_current_time() < start + time)
+		usleep(500);
 }
 
 void	*funct(void *ptr)
@@ -49,19 +65,25 @@ void	*funct(void *ptr)
 	num = vars->index++;
 	pthread_mutex_unlock(&vars->incr);
 	count = 0;
+	if (!((num + 1) % 2))
+	{
+		// ft_usleep(500);
+	}
 	while (!vars->max_meals_bool || count < vars->max_meals)
 	{
-		if ((num + 1) % 2)
+		if ((num + 1) % 2 == 0)
 		{
 			pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
 			lock_print(vars, get_ms() - vars->start_time, num, "fork r");
 			pthread_mutex_lock(&vars->forks[num]);
+			usleep(1000);
 			lock_print(vars, get_ms() - vars->start_time, num, "fork l");
 		}
 		else
 		{
 			pthread_mutex_lock(&vars->forks[num]);
 			lock_print(vars, get_ms() - vars->start_time, num, "fork l");
+			usleep(1000);
 			pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
 			lock_print(vars, get_ms() - vars->start_time, num, "fork r");
 		}
@@ -80,19 +102,24 @@ void	*funct(void *ptr)
 		last_meal = get_ms();
 		lock_print(vars, get_ms() - vars->start_time, num, "eat");
 		usleep(vars->eating_time * 1000);
-		if (num % 2)
+		if ((num + 1) % 2 == 0)
 		{
+			printf("fwf unlocked %ld right\n", num + 1);
 			pthread_mutex_unlock(&vars->forks[(num + 1) % vars->philo_nb]);
+			printf("fwf unlocked %ld left\n", num + 1);
 			pthread_mutex_unlock(&vars->forks[num]);
 		}
 		else
 		{
+			printf("fwf unlocked %ld left\n", num + 1);
 			pthread_mutex_unlock(&vars->forks[num]);
+			printf("fwf unlocked %ld right\n", num + 1);
 			pthread_mutex_unlock(&vars->forks[(num + 1) % vars->philo_nb]);
 		}
 		lock_print(vars, get_ms() - vars->start_time, num, "sleep");
 		usleep(vars->sleeping_time * 1000);
 		lock_print(vars, get_ms() - vars->start_time, num, "is thinking");
+		// usleep(1000);
 		count++;
 	}
 	return (vars);
