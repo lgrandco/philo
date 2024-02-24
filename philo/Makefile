@@ -30,6 +30,9 @@ $(LIBFT) :
 $(NAME) : $(LIBFT) ${OBJ} $(HEADER) Makefile
 	$(CC) $(CFLAGS) -D BONUS=0 -o $(NAME) -g3 -Ilibft $(SRC) $(LIBFT)
 
+fsan: $(LIBFT) ${OBJ} $(HEADER) Makefile
+	$(CC) $(CFLAGS) -fsanitize=thread -D BONUS=0 -o $(NAME) -g3 -Ilibft $(SRC) $(LIBFT)
+
 $(NAME_BONUS) : $(LIBFT) ${OBJ} pipex.h Makefile
 	$(CC) $(CFLAGS) -D BONUS=1 -o $(NAME_BONUS) -g3 -Ilibft $(SRC) $(LIBFT)
 
