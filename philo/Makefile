@@ -39,11 +39,9 @@ $(NAME_BONUS) : $(LIBFT) ${OBJ} pipex.h Makefile
 bonus: $(NAME_BONUS)
 
 clean :
-	make clean -C $(LIBFT_PATH)
 	@ $(RM) $(NAME) $(OBJ)
 
 fclean : clean
-	make fclean -C $(LIBFT_PATH)
 	@ $(RM) $(NAME) $(NAME_BONUS)
 
 c :
