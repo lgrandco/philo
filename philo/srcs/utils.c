@@ -6,20 +6,11 @@
 /*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/27 09:47:27 by legrandc          #+#    #+#             */
-/*   Updated: 2024/02/27 11:56:56 by legrandc         ###   ########.fr       */
+/*   Updated: 2024/02/28 06:07:04 by legrandc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
-
-void	ft_usleep(ssize_t time)
-{
-	ssize_t	start;
-
-	start = time_to_ms();
-	while (time_to_ms() < start + time)
-		usleep(500);
-}
 
 ssize_t	time_to_ms(void)
 {
@@ -29,34 +20,51 @@ ssize_t	time_to_ms(void)
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
-void	exit_error(char *s, void *a, void *b, void *c)
+void	ft_usleep(t_vars *vars, ssize_t time)
+{
+	ssize_t	start;
+
+	start = time_to_ms();
+	while (time_to_ms() < start + time)
+	{
+		usleep(500);
+		if (!all_alive(vars) || finished_eating(vars))
+			return ;
+	}
+	(void)vars;
+}
+
+void	exit_error(char *s, void **t)
 {
 	fprintf(stderr, "%s", s);
-	free(a);
-	free(b);
-	free(c);
+	free(t[0]);
+	free(t[1]);
+	free(t[2]);
 	exit(EXIT_FAILURE);
 }
 
-void	*alloc_and_cpy(const void *src, ssize_t n)
+int	alloc_and_cpy(void **dest, t_vars *vars, ssize_t n)
 {
 	ssize_t				i;
 	unsigned char		*p;
 	const unsigned char	*p2;
-	void				*dest;
+	int					e;
 
-	dest = malloc(n);
-	if (!dest)
-		return (NULL);
-	p2 = src;
-	p = dest;
+	*dest = malloc(n);
+	if (!(*dest))
+		return (-1);
+	p2 = (void *)vars->last_meals;
+	p = *dest;
 	i = 0;
+	pthread_mutex_lock(&vars->m_meal);
 	while (i < n)
 	{
+		e = p2[i];
 		p[i] = p2[i];
 		i++;
 	}
-	return (dest);
+	pthread_mutex_unlock(&vars->m_meal);
+	return (0);
 }
 
 void	free_all(t_vars *vars)

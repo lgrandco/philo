@@ -6,7 +6,7 @@
 /*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:12:51 by leo               #+#    #+#             */
-/*   Updated: 2024/02/27 12:03:11 by legrandc         ###   ########.fr       */
+/*   Updated: 2024/02/28 05:59:44 by legrandc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ typedef struct s_vars
 	pthread_mutex_t	m_count;
 	pthread_mutex_t	m_meal;
 	ssize_t			*last_meals;
+	ssize_t			*last_meals_cpy;
 	ssize_t			count;
 	ssize_t			index;
 	ssize_t			start_time;
@@ -49,21 +50,25 @@ typedef struct s_vars
 }					t_vars;
 
 /* FUNCTIONS */
+void	check_deaths(t_vars *vars)
+;
+int					alloc_and_cpy(void **dest, t_vars *vars, ssize_t n);
+void				*ft_memcpy(void *dest, const void *src, size_t n);
+void				lock_print(t_vars *vars, long index, char *msg);
 void				init_mut(t_vars *vars);
 void				free_all(t_vars *vars);
-void				ft_usleep(ssize_t time);
+void				ft_usleep(t_vars *vars, ssize_t time);
 ssize_t				time_to_ms(void);
-void				exit_error(char *s, void *a, void *b, void *c);
-void				*alloc_and_cpy(const void *src, ssize_t n);
+void				exit_error(char *s, void **t);
 int					all_alive(t_vars *vars);
 int					is_dead(t_vars *vars, ssize_t ms);
 int					finished_eating(t_vars *vars);
-void				ft_usleep(ssize_t time);
 int					eat(t_vars *vars, ssize_t num);
 int					philo_sleep(t_vars *vars, ssize_t num);
 int					take_forks(t_vars *vars, ssize_t num);
 void				init_vars(char **av, t_vars *vars);
 int					ft_atoi(const char *nptr);
 ssize_t				time_to_ms(void);
+void				clear_threads(t_vars *vars);
 
 #endif // !PHILO_H

@@ -6,7 +6,7 @@ NAME_BONUS = $(NAME)_bonus
 
 SRC_PATH = srcs
 
-SRC = main.c ft_atoi.c init.c actions.c checks.c utils.c
+SRC = main.c ft_atoi.c init.c actions.c checks.c utils.c clear.c
 
 SRC := $(addprefix $(SRC_PATH)/,$(SRC))
 
@@ -43,9 +43,6 @@ clean :
 
 fclean : clean
 	@ $(RM) $(NAME) $(NAME_BONUS)
-
-c :
-	${CC} -g3 -Ilibft $(SRC)
 
 re : fclean all
 
