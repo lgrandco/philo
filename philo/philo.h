@@ -6,7 +6,7 @@
 /*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:12:51 by leo               #+#    #+#             */
-/*   Updated: 2024/03/04 07:26:03 by legrandc         ###   ########.fr       */
+/*   Updated: 2024/03/04 07:41:55 by legrandc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@
 # include <sys/time.h>
 # include <unistd.h>
 
-# define ERR "Usage: philo_nb death_time \eating_time sleeping_time [max_meals]\n"
+# define ERR "Usage: philo_nb death_time eating_time sleeping_time [max_meals]\n"
 # define MUTEX_ERR "Mutex initilization error\n"
 
 typedef struct s_vars
