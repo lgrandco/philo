@@ -6,27 +6,27 @@
 /*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/27 09:20:06 by legrandc          #+#    #+#             */
-/*   Updated: 2024/03/04 07:27:20 by legrandc         ###   ########.fr       */
+/*   Updated: 2024/03/04 07:18:16 by legrandc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "philo.h"
+#include "philo_bonus.h"
 
 void	lock_print(t_vars *vars, long index, char *msg)
 {
-	ssize_t	time;
-
-	time = time_to_ms();
-	pthread_mutex_lock(&vars->write);
-	if (!finished_eating(vars) && all_alive(vars))
-	{
-		printf("%ld %ld %s\n", time_to_ms() - vars->start_time, index + 1, msg);
-	}
-	pthread_mutex_unlock(&vars->write);
+	if (!is_dead(vars, time_to_ms()))
+		printf("%ld %ld %s\n", time_to_ms() - vars->start_time, index, msg);
 }
 
 int	take_forks(t_vars *vars, ssize_t num)
 {
+	sem_wait(vars->sem_ongoing);
+	if (finished_eating(vars))
+	{
+		free_all(vars);
+		exit(0);
+	}
+	sem_post(vars->sem_ongoing);
 	if (vars->philo_nb == 1)
 	{
 		lock_print(vars, num, "has taken a fork");
@@ -34,20 +34,15 @@ int	take_forks(t_vars *vars, ssize_t num)
 			ft_usleep(vars, vars->death_time);
 		return (0);
 	}
-	if ((num + 1) % 2 == 0)
+	if (vars->max_meals_bool && vars->count > vars->max_meals)
 	{
-		pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
-		lock_print(vars, num, "has taken a fork");
-		pthread_mutex_lock(&vars->forks[num]);
-		lock_print(vars, num, "has taken a fork");
+		free_all(vars);
+		exit(0);
 	}
-	else
-	{
-		pthread_mutex_lock(&vars->forks[num]);
-		lock_print(vars, num, "has taken a fork");
-		pthread_mutex_lock(&vars->forks[(num + 1) % vars->philo_nb]);
-		lock_print(vars, num, "has taken a fork");
-	}
+	sem_wait(vars->sem_forks);
+	lock_print(vars, num, "has taken a fork");
+	sem_wait(vars->sem_forks);
+	lock_print(vars, num, "has taken a fork");
 	return (0);
 }
 
@@ -55,16 +50,12 @@ int	eat(t_vars *vars, ssize_t num)
 {
 	if (vars->philo_nb == 1)
 		return (0);
+	vars->last_meals = time_to_ms();
 	lock_print(vars, num, "is eating");
-	pthread_mutex_lock(&vars->m_meal);
-	vars->last_meals[num] = time_to_ms();
-	pthread_mutex_unlock(&vars->m_meal);
-	pthread_mutex_lock(&vars->m_count);
 	vars->count++;
-	pthread_mutex_unlock(&vars->m_count);
 	ft_usleep(vars, vars->eating_time);
-	pthread_mutex_unlock(&vars->forks[num]);
-	pthread_mutex_unlock(&vars->forks[(num + 1) % vars->philo_nb]);
+	sem_post(vars->sem_forks);
+	sem_post(vars->sem_forks);
 	return (0);
 }
 
@@ -74,5 +65,6 @@ int	philo_sleep(t_vars *vars, ssize_t num)
 		return (0);
 	lock_print(vars, num, "is sleeping");
 	ft_usleep(vars, vars->sleeping_time);
+	lock_print(vars, num, "is thinking");
 	return (0);
 }

@@ -6,11 +6,11 @@
 /*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/27 09:47:27 by legrandc          #+#    #+#             */
-/*   Updated: 2024/03/02 16:37:28 by legrandc         ###   ########.fr       */
+/*   Updated: 2024/03/04 06:45:54 by legrandc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "philo.h"
+#include "philo_bonus.h"
 
 ssize_t	time_to_ms(void)
 {
@@ -25,13 +25,8 @@ void	ft_usleep(t_vars *vars, ssize_t time)
 	ssize_t	start;
 
 	start = time_to_ms();
-	while (time_to_ms() < start + time)
-	{
+	while (time_to_ms() < start + time && !is_dead(vars, time_to_ms()))
 		usleep(500);
-		if (!all_alive(vars) || finished_eating(vars))
-			return ;
-	}
-	(void)vars;
 }
 
 void	exit_error(char *s, void **t)
@@ -43,33 +38,30 @@ void	exit_error(char *s, void **t)
 	exit(EXIT_FAILURE);
 }
 
-int	alloc_and_cpy(void **dest, t_vars *vars, ssize_t n)
+void	*alloc_and_cpy(const void *src, ssize_t n)
 {
 	ssize_t				i;
 	unsigned char		*p;
 	const unsigned char	*p2;
-	int					e;
+	void				*dest;
 
-	*dest = malloc(n);
-	if (!(*dest))
-		return (-1);
-	p2 = (void *)vars->last_meals;
-	p = *dest;
+	dest = malloc(n);
+	if (!dest)
+		return (NULL);
+	p2 = src;
+	p = dest;
 	i = 0;
-	pthread_mutex_lock(&vars->m_meal);
 	while (i < n)
 	{
-		e = p2[i];
 		p[i] = p2[i];
 		i++;
 	}
-	pthread_mutex_unlock(&vars->m_meal);
-	return (0);
+	return (dest);
 }
 
 void	free_all(t_vars *vars)
 {
-	free(vars->threads);
-	free(vars->last_meals);
-	free(vars->forks);
+	free(vars->pids);
+	sem_close(vars->sem_forks);
+	sem_close(vars->sem_ongoing);
 }

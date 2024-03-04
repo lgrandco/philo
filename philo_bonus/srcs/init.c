@@ -6,33 +6,18 @@
 /*   By: legrandc <legrandc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/27 08:16:55 by legrandc          #+#    #+#             */
-/*   Updated: 2024/03/04 07:26:01 by legrandc         ###   ########.fr       */
+/*   Updated: 2024/03/04 06:47:40 by legrandc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "philo.h"
+#include "philo_bonus.h"
 
-void	init_mut(t_vars *vars)
+void	init_sem(t_vars *vars)
 {
-	ssize_t	i;
-
-	i = 0;
-	while (i < vars->philo_nb)
-	{
-		vars->last_meals[i] = time_to_ms();
-		if (pthread_mutex_init(&vars->forks[i], NULL) != 0)
-			exit_error(MUTEX_ERR, (void *[]){vars->threads, vars->last_meals,
-				vars->threads});
-		i++;
-	}
-	if (pthread_mutex_init(&vars->m_meal, NULL) != 0
-		|| pthread_mutex_init(&vars->m_alive, NULL) != 0
-		|| pthread_mutex_init(&vars->m_count, NULL) != 0
-		|| pthread_mutex_init(&vars->write, NULL) != 0
-		|| pthread_mutex_init(&vars->dead_lock, NULL) != 0
-		|| pthread_mutex_init(&vars->incr, NULL) != 0)
-		exit_error(MUTEX_ERR, (void *[]){vars->threads, vars->last_meals,
-			vars->forks});
+	sem_unlink(FORKS_FILE);
+	sem_unlink(FINISHED_FILE);
+	vars->sem_ongoing = sem_open(FINISHED_FILE, O_CREAT, O_RDWR, 1);
+	vars->sem_forks = sem_open(FORKS_FILE, O_CREAT, O_RDWR, vars->philo_nb);
 	vars->start_time = time_to_ms();
 }
 
@@ -52,15 +37,7 @@ void	init_vars(char **av, t_vars *vars)
 	vars->index = 0;
 	vars->alive = 1;
 	vars->count = 0;
-	vars->finished = 0;
-	vars->threads = malloc(sizeof(pthread_t) * vars->philo_nb);
-	if (!vars->threads)
+	vars->pids = malloc(sizeof(*vars->pids) * vars->philo_nb);
+	if (!vars->pids)
 		exit_error("Malloc error\n", (void *[]){0, 0, 0});
-	vars->last_meals = malloc(sizeof(*vars->last_meals) * vars->philo_nb);
-	if (!vars->last_meals)
-		exit_error("Malloc error\n", (void *[]){vars->threads, 0, 0});
-	vars->forks = malloc(sizeof(pthread_mutex_t) * vars->philo_nb);
-	if (!vars->forks)
-		exit_error("Malloc error\n", (void *[]){vars->threads, vars->last_meals,
-			0});
 }
